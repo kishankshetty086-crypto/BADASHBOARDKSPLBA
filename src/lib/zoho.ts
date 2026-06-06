@@ -15,7 +15,7 @@ export const ZOHO_CONFIG = {
 
 /** Generate the Zoho OAuth URL for the user to click */
 export function getZohoAuthUrl(): string {
-  const scope = 'ZohoSheet.data.ALL';
+  const scope = 'ZohoSheet.dataAPI.READ,ZohoSheet.dataAPI.UPDATE';
   const url = new URL(`${ZOHO_CONFIG.accountsUrl}/oauth/v2/auth`);
   url.searchParams.append('response_type', 'code');
   url.searchParams.append('client_id', ZOHO_CONFIG.clientId);

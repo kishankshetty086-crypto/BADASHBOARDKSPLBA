@@ -1,26 +1,20 @@
-import fs from 'fs';
-import path from 'path';
+import { URLSearchParams } from 'url';
 
-const TOKEN_FILE_PATH = path.join(process.cwd(), 'zoho-tokens.json');
+import { ZohoTokens, loadTokens, saveTokens } from './tokenStore';
 
-type ZohoTokens = {
-  access_token: string;
-  refresh_token: string;
-  api_domain: string;
-  token_type: string;
-  expires_in: number;
-  expires_at: number; // calculated
-};
-
+/**
+ * Static Zoho configuration – all values come from env vars.
+ */
 export const ZOHO_CONFIG = {
-  clientId: process.env.ZOHO_CLIENT_ID || '',
-  clientSecret: process.env.ZOHO_CLIENT_SECRET || '',
-  redirectUri: process.env.ZOHO_REDIRECT_URI || '',
-  accountsUrl: process.env.ZOHO_ACCOUNTS_URL || 'https://accounts.zoho.in',
-  apiUrl: process.env.ZOHO_API_URL || 'https://sheet.zoho.in/api/v2',
+  clientId: process.env.ZOHO_CLIENT_ID ?? '',
+  clientSecret: process.env.ZOHO_CLIENT_SECRET ?? '',
+  redirectUri: process.env.ZOHO_REDIRECT_URI ?? '',
+  accountsUrl: process.env.ZOHO_ACCOUNTS_URL ?? 'https://accounts.zoho.in',
+  apiUrl: process.env.ZOHO_API_URL ?? 'https://sheet.zoho.in/api/v2',
 };
 
-export function getZohoAuthUrl() {
+/** Generate the Zoho OAuth URL for the user to click */
+export function getZohoAuthUrl(): string {
   const scope = 'ZohoSheet.data.ALL';
   const url = new URL(`${ZOHO_CONFIG.accountsUrl}/oauth/v2/auth`);
   url.searchParams.append('response_type', 'code');
@@ -32,6 +26,7 @@ export function getZohoAuthUrl() {
   return url.toString();
 }
 
+/** Exchange a one‑time auth code for access & refresh tokens */
 export async function exchangeCodeForTokens(code: string): Promise<ZohoTokens> {
   const params = new URLSearchParams();
   params.append('grant_type', 'authorization_code');
@@ -44,19 +39,17 @@ export async function exchangeCodeForTokens(code: string): Promise<ZohoTokens> {
     method: 'POST',
     body: params,
   });
-
   const data = await res.json();
   if (data.error) {
     throw new Error(`Zoho auth error: ${data.error}`);
   }
-
-  // Calculate expiration time (usually 3600 seconds)
-  data.expires_at = Date.now() + (data.expires_in * 1000);
-  
-  saveTokens(data);
+  // Calculate absolute expiry (ms since epoch)
+  data.expires_at = Date.now() + data.expires_in * 1000;
+  await saveTokens(data);
   return data;
 }
 
+/** Refresh the access token using the stored refresh token */
 export async function refreshAccessToken(refreshToken: string): Promise<ZohoTokens> {
   const params = new URLSearchParams();
   params.append('grant_type', 'refresh_token');
@@ -68,61 +61,62 @@ export async function refreshAccessToken(refreshToken: string): Promise<ZohoToke
     method: 'POST',
     body: params,
   });
-
   const data = await res.json();
   if (data.error) {
     throw new Error(`Zoho refresh error: ${data.error}`);
   }
 
-  const existingTokens = loadTokens();
-  const updatedTokens = {
-    ...existingTokens,
+  const existing = (await loadTokens()) ?? ({} as ZohoTokens);
+  const merged: ZohoTokens = {
+    ...existing,
     ...data,
-    refresh_token: existingTokens?.refresh_token || refreshToken,
-    expires_at: Date.now() + (data.expires_in * 1000),
+    refresh_token: existing.refresh_token ?? refreshToken,
+    expires_at: Date.now() + data.expires_in * 1000,
   };
-  
-  saveTokens(updatedTokens);
-  return updatedTokens;
+  await saveTokens(merged);
+  return merged;
 }
 
-export function saveTokens(tokens: ZohoTokens) {
-  fs.writeFileSync(TOKEN_FILE_PATH, JSON.stringify(tokens, null, 2), 'utf8');
-}
+// Guard to avoid parallel refreshes that could trigger Zoho rate limits
+let ongoingRefresh: Promise<string> | null = null;
 
-export function loadTokens(): ZohoTokens | null {
-  try {
-    if (fs.existsSync(TOKEN_FILE_PATH)) {
-      const data = fs.readFileSync(TOKEN_FILE_PATH, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (err) {
-    console.error("Failed to read zoho tokens file:", err);
-  }
-  return null;
-}
-
+/** Return a fresh access token, refreshing when needed */
 export async function getValidAccessToken(): Promise<string> {
-  const tokens = loadTokens();
-  if (!tokens || !tokens.refresh_token) {
-    throw new Error("No Zoho refresh token available. Please authenticate.");
+  const tokens = await loadTokens();
+  if (!tokens?.refresh_token) {
+    throw new Error('No Zoho refresh token available – you must authenticate first.');
+  }
+  const now = Date.now();
+  const needsRefresh =
+    !tokens.expires_at ||
+    tokens.expires_at > now + 24 * 60 * 60 * 1000 || // unrealistic future value → treat as bad
+    now > tokens.expires_at - 5 * 60 * 1000; // less than 5 min left
+
+  if (!needsRefresh) {
+    return tokens.access_token;
   }
 
-  // Force refresh if expires_at is missing, 0, very far future (bad manual value), or within 5 min
-  const isExpired = !tokens.expires_at 
-    || tokens.expires_at > Date.now() + (24 * 60 * 60 * 1000) // > 24h means it was manually set wrong
-    || Date.now() > tokens.expires_at - 300000;               // within 5 min of expiry
-
-  if (isExpired) {
-    console.log('[Zoho] Token expired or needs refresh, refreshing now...');
-    const newTokens = await refreshAccessToken(tokens.refresh_token);
-    return newTokens.access_token;
+  // If a refresh is already in progress, wait for it instead of starting a new one
+  if (ongoingRefresh) {
+    return ongoingRefresh;
   }
 
-  return tokens.access_token;
+  // Start a new refresh and store the promise so others can await it
+  ongoingRefresh = (async () => {
+    try {
+      const fresh = await refreshAccessToken(tokens.refresh_token!);
+      return fresh.access_token;
+    } finally {
+      // Reset guard for next calls
+      ongoingRefresh = null;
+    }
+  })();
+
+  return ongoingRefresh;
 }
 
-export async function checkAuthStatus() {
-  const tokens = loadTokens();
-  return !!tokens && !!tokens.refresh_token;
+/** Simple helper for UI – are we already authenticated? */
+export async function checkAuthStatus(): Promise<boolean> {
+  const tokens = await loadTokens();
+  return !!tokens?.refresh_token;
 }

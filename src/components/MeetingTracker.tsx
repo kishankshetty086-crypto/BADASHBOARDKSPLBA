@@ -124,25 +124,6 @@ export default function MeetingTracker({ team }: { team: string }) {
             Create Zoho Meeting
           </button>
 
-              {showMeetingModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-                    <h3 className="text-lg font-semibold mb-4">Zoho Meeting</h3>
-                    <iframe src="https://meeting.zoho.in/meeting/" className="w-full h-64 mb-4 border" title="Zoho Meeting" />
-                    <label className="input-label block mb-2">Enter Meeting Link</label>
-                    <input type="url" className="input-field w-full mb-4" placeholder="https://meeting.zoho.in/..." value={meetingUrlInput} onChange={e => setMeetingUrlInput(e.target.value)} />
-                    <div className="flex justify-end gap-3">
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => {
-                          setShowMeetingModal(false);
-                          setMeetingUrlInput('');
-                        }}
-                      >
-                        Meeting Not created
-                      </button>
-                      
-
           <h3 className="mb-4" style={{ fontWeight: 600 }}>Schedule New Meeting</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="input-group">

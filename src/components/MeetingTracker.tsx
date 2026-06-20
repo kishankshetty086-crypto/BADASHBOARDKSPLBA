@@ -167,7 +167,7 @@ export default function MeetingTracker({ team }: { team: string }) {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg shadow-lg p-6 w-96">
                 <h3 className="text-lg font-semibold mb-4">Zoho Meeting</h3>
-                <iframe src="https://meeting.zoho.in/meeting/" className="w-full h-64 mb-4 border" title="Zoho Meeting" />
+                <iframe src="https://meeting.zoho.in/meeting/60016380334/487065000000008011/meeting/create" className="w-full h-64 mb-4 border" title="Zoho Meeting" />
                 <label className="input-label block mb-2">Enter Meeting Link</label>
                 <input type="url" className="input-field w-full mb-4" placeholder="https://meeting.zoho.in/..." value={meetingUrlInput} onChange={e => setMeetingUrlInput(e.target.value)} />
                 <div className="flex justify-end gap-3">

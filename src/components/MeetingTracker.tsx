@@ -118,12 +118,69 @@ export default function MeetingTracker({ team }: { team: string }) {
 
       {/* Add Meeting Form */}
       {showForm && (
+        <>
           {/* Top Zoho Meeting Button */}
           <button type="button" className="btn btn-secondary mb-2" onClick={() => setShowMeetingModal(true)}>
             Create Zoho Meeting
           </button>
-          
-        <div className="glass-panel mb-6" style={{ padding: '2rem', border: '1px solid var(--primary)' }}>
+
+          <div className="glass-panel mb-6" style={{ padding: '2rem', border: '1px solid var(--primary)' }}>
+            <h3 className="mb-4" style={{ fontWeight: 600 }}>Schedule New Meeting</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="input-group">
+                <label className="input-label">Client *</label>
+                <input type="text" className="input-field" value={form.client} onChange={e => setForm(f => ({ ...f, client: e.target.value }))} placeholder="e.g. PROSTOCKS" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Meeting Agenda *</label>
+                <input type="text" className="input-field" value={form.agenda} onChange={e => setForm(f => ({ ...f, agenda: e.target.value }))} placeholder="e.g. Sprint Review" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Date & Time *</label>
+                <input type="datetime-local" className="input-field" value={form.dateTime} onChange={e => setForm(f => ({ ...f, dateTime: e.target.value }))} />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Meeting Link</label>
+                <input type="url" className="input-field" value={form.meetingLink} onChange={e => setForm(f => ({ ...f, meetingLink: e.target.value }))} placeholder="https://meet.zoho.in/..." />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Participants (Client Side)</label>
+                <input type="text" className="input-field" value={form.participants} onChange={e => setForm(f => ({ ...f, participants: e.target.value }))} placeholder="Names or emails" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">BA Participants</label>
+                <input type="text" className="input-field" value={form.baParticipants} onChange={e => setForm(f => ({ ...f, baParticipants: e.target.value }))} placeholder="BA team emails" />
+              </div>
+              <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="input-label">Remarks</label>
+                <textarea className="input-field" rows={2} value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} placeholder="Any additional notes..." />
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 mt-4">
+              <button className="btn btn-secondary" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? 'Saving...' : 'Save to Zoho Sheet'}
+              </button>
+              {/* Zoho Meeting Modal */}
+              {showMeetingModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+                    <h3 className="text-lg font-semibold mb-4">Zoho Meeting</h3>
+                    <iframe src="https://meeting.zoho.in/meeting/" className="w-full h-64 mb-4 border" title="Zoho Meeting" />
+                    <label className="input-label block mb-2">Enter Meeting Link</label>
+                    <input type="url" className="input-field w-full mb-4" placeholder="https://meeting.zoho.in/..." value={meetingUrlInput} onChange={e => setMeetingUrlInput(e.target.value)} />
+                    <div className="flex justify-end gap-3">
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setShowMeetingModal(false);
+                          setMeetingUrlInput('');
+                        }}
+                      >
+                        Meeting Not created
+                      </button>
+                      <button
+                        className="btn btn-primary"
           <h3 className="mb-4" style={{ fontWeight: 600 }}>Schedule New Meeting</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="input-group">
@@ -158,47 +215,42 @@ export default function MeetingTracker({ team }: { team: string }) {
           <div className="flex justify-end gap-4 mt-4">
             <button className="btn btn-secondary" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}>Cancel</button>
             <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
-                {submitting ? 'Saving...' : 'Save to Zoho Sheet'}
-              </button>
-              {/* Zoho Meeting Modal */}
-              {showMeetingModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-                    <h3 className="text-lg font-semibold mb-4">Zoho Meeting</h3>
-                    <iframe src="https://meeting.zoho.in/meeting/" className="w-full h-64 mb-4 border" title="Zoho Meeting"></iframe>
-                    <label className="input-label block mb-2">Enter Meeting Link</label>
-                    <input
-                      type="url"
-                      className="input-field w-full mb-4"
-                      placeholder="https://meeting.zoho.in/..."
-                      value={meetingUrlInput}
-                      onChange={e => setMeetingUrlInput(e.target.value)}
-                    />
-                    <div className="flex justify-end gap-3">
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => {
-                          setShowMeetingModal(false);
-                          setMeetingUrlInput('');
-                        }}
-                      >
-                        Meeting Not created
-                      </button>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                          setForm(f => ({ ...f, meetingLink: meetingUrlInput }));
-                          setShowMeetingModal(false);
-                        }}
-                        disabled={!meetingUrlInput.trim()}
-                      >
-                        Submit
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {submitting ? 'Saving...' : 'Save to Zoho Sheet'}
+            </button>
           </div>
+          
+          {/* Zoho Meeting Modal */}
+          {showMeetingModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+                <h3 className="text-lg font-semibold mb-4">Zoho Meeting</h3>
+                <iframe src="https://meeting.zoho.in/meeting/" className="w-full h-64 mb-4 border" title="Zoho Meeting" />
+                <label className="input-label block mb-2">Enter Meeting Link</label>
+                <input type="url" className="input-field w-full mb-4" placeholder="https://meeting.zoho.in/..." value={meetingUrlInput} onChange={e => setMeetingUrlInput(e.target.value)} />
+                <div className="flex justify-end gap-3">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowMeetingModal(false);
+                      setMeetingUrlInput('');
+                    }}
+                  >
+                    Meeting Not created
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setForm(f => ({ ...f, meetingLink: meetingUrlInput }));
+                      setShowMeetingModal(false);
+                    }}
+                    disabled={!meetingUrlInput.trim()}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

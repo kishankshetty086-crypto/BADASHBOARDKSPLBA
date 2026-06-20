@@ -118,6 +118,11 @@ export default function MeetingTracker({ team }: { team: string }) {
 
       {/* Add Meeting Form */}
       {showForm && (
+          {/* Top Zoho Meeting Button */}
+          <button type="button" className="btn btn-secondary mb-2" onClick={() => setShowMeetingModal(true)}>
+            Create Zoho Meeting
+          </button>
+          
         <div className="glass-panel mb-6" style={{ padding: '2rem', border: '1px solid var(--primary)' }}>
           <h3 className="mb-4" style={{ fontWeight: 600 }}>Schedule New Meeting</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -135,14 +140,7 @@ export default function MeetingTracker({ team }: { team: string }) {
             </div>
             <div className="input-group">
               <label className="input-label">Meeting Link</label>
-                <div className="flex items-center gap-2">
-                  <input type="url" className="input-field" value={form.meetingLink} onChange={e => setForm(f => ({ ...f, meetingLink: e.target.value }))} placeholder="https://meet.zoho.in/..." />
-                  <button type="button" className="btn btn-secondary" onClick={() => {
-                    // Open Zoho meeting creation page in a new tab
-                    window.open('https://meeting.zoho.in/meeting/', '_blank');
-                    setShowMeetingModal(true);
-                  }}>Create Zoho Meeting</button>
-                </div>
+              <input type="url" className="input-field" value={form.meetingLink} onChange={e => setForm(f => ({ ...f, meetingLink: e.target.value }))} placeholder="https://meet.zoho.in/..." />
             </div>
             <div className="input-group">
               <label className="input-label">Participants (Client Side)</label>
@@ -166,7 +164,9 @@ export default function MeetingTracker({ team }: { team: string }) {
               {showMeetingModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                   <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-                    <h3 className="text-lg font-semibold mb-4">Enter Zoho Meeting Link</h3>
+                    <h3 className="text-lg font-semibold mb-4">Zoho Meeting</h3>
+                    <iframe src="https://meeting.zoho.in/meeting/" className="w-full h-64 mb-4 border" title="Zoho Meeting"></iframe>
+                    <label className="input-label block mb-2">Enter Meeting Link</label>
                     <input
                       type="url"
                       className="input-field w-full mb-4"
@@ -182,7 +182,7 @@ export default function MeetingTracker({ team }: { team: string }) {
                           setMeetingUrlInput('');
                         }}
                       >
-                        Meeting not created
+                        Meeting Not created
                       </button>
                       <button
                         className="btn btn-primary"

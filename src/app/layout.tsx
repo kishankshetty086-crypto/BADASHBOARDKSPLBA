@@ -5,16 +5,20 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
-  title: "BA Dashboard ",
-  description: "BA Dashboard kambala",
+  title: "BA Dashboard",
+  description: "Business Analyst Dashboard",
 };
 
 export default function RootLayout({
